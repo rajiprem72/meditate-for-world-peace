@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Event — Meditate for World Peace</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .container { max-width:900px; margin:20px auto; padding:16px; }
+    .video-wrap { position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.08); }
+    #player { position:absolute; top:0; left:0; width:100%; height:100%; }
+    #claimBox { display:none; margin-top:18px; padding:16px; background:#fff; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
+    input[type=text], input[type=email] { width:100%; padding:10px; margin:6px 0; border:1px solid #ddd; border-radius:6px; }
+    button { background:#2563eb; color:white; padding:10px 14px; border:none; border-radius:6px; cursor:pointer; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <div class="container">
+    <h1 class="text-2xl font-bold">Event Video — Guided Meditation</h1>
+    <p class="text-sm text-gray-600">Watch the full guided meditation. After it finishes, claim your certificate by submitting your Registration ID & email.</p>
+
+    <div class="video-wrap">
+      <div id="player"></div>
+    </div>
+
+    <p class="text-sm mt-2 text-gray-600">If autoplay is disabled, press play and watch full 20 minutes. Video source: Ramakrishna Math</p>
+
+    <div id="claimBox">
+      <h3 class="text-lg font-semibold">Claim your E-Certificate</h3>
+      <p class="text-sm text-gray-600">Enter your Registration ID (example: GSY2025-000012) and the email you used during registration.</p>
+      <input id="regId" type="text" placeholder="Registration ID">
+      <input id="email" type="email" placeholder="Email">
+      <button id="claimBtn" class="mt-2">Submit & Request Certificate</button>
+      <p id="claimMsg" class="text-sm mt-2 text-gray-600"></p>
+    </div>
+  </div>
+
+<script>
+  // Load YouTube IFrame API
+  var tag = document.createElement('script');
+  tag.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(tag);
+
+  var player;
+  function onYouTubeIframeAPIReady() {
+    player = new YT.Player('player', {
+      videoId: 'r1WuDMFKMpE', // the guided meditation video
+      playerVars: { 'playsinline': 1, 'rel': 0, 'modestbranding': 1 },
+      events: { 'onStateChange': onPlayerStateChange }
+    });
+  }
+
+  function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.ENDED) {
+      document.getElementById('claimBox').style.display = 'block';
+      document.getElementById('claimMsg').textContent = 'Video finished. Enter your Registration ID & email to request the certificate.';
+    }
+  }
+
+  // Replace with your Apps Script webapp URL (deployed later)
+  const APPS_SCRIPT_ENDPOINT = "PLACEHOLDER_APPS_SCRIPT_WEB_APP_URL";
+
+  document.getElementById('claimBtn').addEventListener('click', function(){
+    var regId = document.getElementById('regId').value.trim();
+    var email = document.getElementById('email').value.trim();
+    var msg = document.getElementById('claimMsg');
+    if (!regId || !email) { msg.textContent = 'Please enter both Registration ID and Email.'; return; }
+    msg.textContent = 'Verifying... please wait.';
+    fetch(APPS_SCRIPT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ action: 'claimCertificate', regId: regId, email: email })
+    }).then(r => r.json()).then(resp => {
+      if (resp && resp.status === 'ok') {
+        msg.textContent = 'Success — your certificate will be emailed to ' + email + ' shortly.';
+      } else {
+        msg.textContent = 'Error: ' + (resp.message || 'Verification failed.');
+      }
+    }).catch(e => {
+      msg.textContent = 'Network error. Try again.';
+    });
+  });
+</script>
+</body>
+</html>
