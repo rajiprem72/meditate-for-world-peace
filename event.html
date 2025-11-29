@@ -1,85 +1,213 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Event — Meditate for World Peace</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <style>
-    .container { max-width:900px; margin:20px auto; padding:16px; }
-    .video-wrap { position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.08); }
-    #player { position:absolute; top:0; left:0; width:100%; height:100%; }
-    #claimBox { display:none; margin-top:18px; padding:16px; background:#fff; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
-    input[type=text], input[type=email] { width:100%; padding:10px; margin:6px 0; border:1px solid #ddd; border-radius:6px; }
-    button { background:#2563eb; color:white; padding:10px 14px; border:none; border-radius:6px; cursor:pointer; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>International Meditation Day — Event</title>
+<style>
+  body { font-family: Arial, sans-serif; margin:0; background:#f6f8fb; color:#222; }
+  .wrap { max-width:900px; margin:28px auto; padding:18px; }
+  h1 { text-align:center; color:#2b2b7a; }
+  .player { background:#000; border-radius:10px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.12); }
+  iframe { width:100%; height:520px; border:0; display:block; }
+  .info { margin-top:12px; padding:12px; background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+  .timer { font-size:22px; font-weight:700; color:#2b2b7a; }
+  .notice { font-size:14px; color:#444; margin-top:8px; }
+  .controls { margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+  input[type="text"] { padding:10px; width:100%; max-width:360px; border-radius:6px; border:1px solid #ddd; }
+  button { padding:10px 14px; border-radius:8px; border:0; background:#4e46e5; color:#fff; cursor:pointer; box-shadow:0 4px 12px rgba(78,70,229,0.18); }
+  button[disabled] { opacity:0.6; cursor:not-allowed; }
+  .small { font-size:13px; color:#666; margin-top:10px; }
+  .success { margin-top:16px; padding:10px; background:#e6fff0; border-radius:6px; color:#0b7a3a; border:1px solid #bfe7c6; }
+</style>
 </head>
-<body class="bg-gray-50 text-gray-900">
-  <div class="container">
-    <h1 class="text-2xl font-bold">Event Video — Guided Meditation</h1>
-    <p class="text-sm text-gray-600">Watch the full guided meditation. After it finishes, claim your certificate by submitting your Registration ID & email.</p>
+<body>
+<div class="wrap">
+  <h1>International Meditation Day — Online Group Meditation</h1>
 
-    <div class="video-wrap">
-      <div id="player"></div>
-    </div>
-
-    <p class="text-sm mt-2 text-gray-600">If autoplay is disabled, press play and watch full 20 minutes. Video source: Ramakrishna Math</p>
-
-    <div id="claimBox">
-      <h3 class="text-lg font-semibold">Claim your E-Certificate</h3>
-      <p class="text-sm text-gray-600">Enter your Registration ID (example: GSY2025-000012) and the email you used during registration.</p>
-      <input id="regId" type="text" placeholder="Registration ID">
-      <input id="email" type="email" placeholder="Email">
-      <button id="claimBtn" class="mt-2">Submit & Request Certificate</button>
-      <p id="claimMsg" class="text-sm mt-2 text-gray-600"></p>
-    </div>
+  <div class="player" id="playerWrap">
+    <!-- YouTube iframe -->
+    <iframe id="ytplayer"
+      src="https://www.youtube-nocookie.com/embed/r1WuDMFKMpE?enablejsapi=1&rel=0&modestbranding=1"
+      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
   </div>
 
+  <div class="info">
+    <div><strong>Watch the entire guided meditation (22:49)</strong></div>
+    <div class="timer" id="timerDisplay">22:49</div>
+    <div class="notice">Timer starts when you press <b>Start Session</b> and the video is playing. The completion button appears only after full time is accumulated.</div>
+
+    <div class="controls" style="margin-top:14px;">
+      <button id="startBtn">Start Session</button>
+      <button id="pauseBtn" disabled>Pause</button>
+      <button id="resetBtn" disabled>Reset</button>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label for="regid"><strong>Your Registration ID</strong> (GSY2025-xxxxxx)</label><br>
+      <input type="text" id="regid" placeholder="Enter your Registration ID" />
+    </div>
+
+    <div style="margin-top:12px;">
+      <button id="submitBtn" disabled>Submit Completion</button>
+    </div>
+
+    <div class="small">Note: The page monitors actual playback time. Avoid pausing or switching tabs. If you refresh, your accumulated watched time is reset.</div>
+
+    <div id="result" class="success" style="display:none;"></div>
+  </div>
+</div>
+
 <script>
-  // Load YouTube IFrame API
-  var tag = document.createElement('script');
-  tag.src = "https://www.youtube.com/iframe_api";
-  document.head.appendChild(tag);
+/*
+  Event page logic:
+  - Uses YouTube IFrame API to monitor play/pause and accumulate played seconds.
+  - Required total = 1369 seconds (22*60 + 49)
+  - Submit button enabled only when watchedSeconds >= requiredSeconds
+  - When submitting, does POST to Apps Script endpoint with { token, registrationID }
+*/
 
-  var player;
-  function onYouTubeIframeAPIReady() {
-    player = new YT.Player('player', {
-      videoId: 'r1WuDMFKMpE', // the guided meditation video
-      playerVars: { 'playsinline': 1, 'rel': 0, 'modestbranding': 1 },
-      events: { 'onStateChange': onPlayerStateChange }
-    });
-  }
+const REQUIRED_SECONDS = 22*60 + 49; // 1369
+let watchedSeconds = 0;
+let lastPlayTimestamp = 0;
+let playing = false;
+let intervalTick = null;
 
-  function onPlayerStateChange(event) {
-    if (event.data === YT.PlayerState.ENDED) {
-      document.getElementById('claimBox').style.display = 'block';
-      document.getElementById('claimMsg').textContent = 'Video finished. Enter your Registration ID & email to request the certificate.';
+// Load YouTube IFrame API
+let tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+document.head.appendChild(tag);
+
+let player;
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player('ytplayer', {
+    events: {
+      'onStateChange': onPlayerStateChange
     }
-  }
-
-  // Replace with your Apps Script webapp URL (deployed later)
-  const APPS_SCRIPT_ENDPOINT = "PLACEHOLDER_APPS_SCRIPT_WEB_APP_URL";
-
-  document.getElementById('claimBtn').addEventListener('click', function(){
-    var regId = document.getElementById('regId').value.trim();
-    var email = document.getElementById('email').value.trim();
-    var msg = document.getElementById('claimMsg');
-    if (!regId || !email) { msg.textContent = 'Please enter both Registration ID and Email.'; return; }
-    msg.textContent = 'Verifying... please wait.';
-    fetch(APPS_SCRIPT_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ action: 'claimCertificate', regId: regId, email: email })
-    }).then(r => r.json()).then(resp => {
-      if (resp && resp.status === 'ok') {
-        msg.textContent = 'Success — your certificate will be emailed to ' + email + ' shortly.';
-      } else {
-        msg.textContent = 'Error: ' + (resp.message || 'Verification failed.');
-      }
-    }).catch(e => {
-      msg.textContent = 'Network error. Try again.';
-    });
   });
+}
+
+// handle state changes
+function onPlayerStateChange(event) {
+  const state = event.data;
+  // states: -1 (unstarted), 0 ended, 1 playing, 2 paused, 3 buffering
+  if (state === 1) {
+    startCounting();
+  } else {
+    stopCounting();
+  }
+}
+
+function startCounting() {
+  if (playing) return;
+  playing = true;
+  lastPlayTimestamp = Date.now();
+  intervalTick = setInterval(() => {
+    // add 1 second per tick
+    watchedSeconds += 1;
+    updateTimerDisplay();
+    if (watchedSeconds >= REQUIRED_SECONDS) {
+      enableSubmission();
+      stopCounting(); // stop further increment
+    }
+  }, 1000);
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('pauseBtn').disabled = false;
+  document.getElementById('resetBtn').disabled = false;
+}
+
+function stopCounting() {
+  if (!playing) return;
+  playing = false;
+  if (intervalTick) {
+    clearInterval(intervalTick);
+    intervalTick = null;
+  }
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('pauseBtn').disabled = true;
+}
+
+function resetCounting() {
+  watchedSeconds = 0;
+  updateTimerDisplay();
+  enableSubmission(false);
+  stopCounting();
+  document.getElementById('resetBtn').disabled = true;
+  document.getElementById('startBtn').disabled = false;
+}
+
+function updateTimerDisplay() {
+  const remaining = Math.max(0, REQUIRED_SECONDS - watchedSeconds);
+  const mm = Math.floor(remaining / 60).toString().padStart(2,'0');
+  const ss = (remaining % 60).toString().padStart(2,'0');
+  document.getElementById('timerDisplay').textContent = mm + ":" + ss;
+}
+
+function enableSubmission(yes = true) {
+  document.getElementById('submitBtn').disabled = !yes;
+  if (yes) {
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').textContent = "You have completed the required watching time. Please enter your Registration ID and click Submit Completion.";
+    document.getElementById('result').style.color = "#0b7a3a";
+  } else {
+    document.getElementById('result').style.display = 'none';
+  }
+}
+
+// UI buttons
+document.getElementById('startBtn').addEventListener('click', function(){
+  // start video playback as well if possible
+  if (player && typeof player.playVideo === 'function') { player.playVideo(); }
+  startCounting();
+});
+document.getElementById('pauseBtn').addEventListener('click', function(){
+  if (player && typeof player.pauseVideo === 'function') { player.pauseVideo(); }
+  stopCounting();
+});
+document.getElementById('resetBtn').addEventListener('click', function(){
+  if (player && typeof player.stopVideo === 'function') { player.stopVideo(); }
+  resetCounting();
+});
+
+// Submission logic
+document.getElementById('submitBtn').addEventListener('click', function(){
+  const reg = document.getElementById('regid').value.trim();
+  if (!reg) { alert("Please enter your Registration ID (GSY2025-xxxxxx)"); return; }
+  // Basic format check
+  if (!/^GSY2025-/.test(reg)) { alert("Registration ID format seems wrong. It should start with GSY2025-"); return; }
+
+  // Prepare payload
+  const payload = {
+    token: "GSY2025_EventSecureKey_9f72B!xQ48pZ", // <<-- replace with same secret
+    registrationID: reg
+  };
+
+  // Disable button while sending
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('result').textContent = "Submitting... please wait.";
+
+  fetch("https://script.google.com/macros/s/AKfycbwWC3XaVd-NDEi8rOEbFtiYPn9AnNNlMN6wR3oe2tZgbzghbsNvS2EGFrzQDcpehLztww/exec", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+  .then(r => r.json())
+  .then(resp => {
+    if (resp && resp.success) {
+      document.getElementById('result').textContent = "Completed successfully. Certificate will be emailed shortly. Thank you!";
+      document.getElementById('result').style.color = "#0b7a3a";
+    } else {
+      document.getElementById('result').textContent = "Error: " + (resp.error || "Unknown error");
+      document.getElementById('result').style.color = "#b33";
+      document.getElementById('submitBtn').disabled = false;
+    }
+  })
+  .catch(err => {
+    document.getElementById('result').textContent = "Network error: " + err;
+    document.getElementById('result').style.color = "#b33";
+    document.getElementById('submitBtn').disabled = false;
+  });
+});
 </script>
 </body>
 </html>
