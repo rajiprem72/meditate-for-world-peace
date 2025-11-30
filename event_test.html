@@ -56,13 +56,13 @@
     <div id="result" class="success" style="display:none;"></div>
   </div>
 </div>
-
 <script>
 const REQUIRED_SECONDS = 30; // 30-second test
 let watchedSeconds = 0;
 let playing = false;
 let intervalTick = null;
 
+// Load YouTube API
 let tag = document.createElement('script');
 tag.src = "https://www.youtube.com/iframe_api";
 document.head.appendChild(tag);
@@ -83,7 +83,7 @@ function startCounting() {
   if (playing) return;
   playing = true;
   intervalTick = setInterval(() => {
-    watchedSeconds += 1;
+    watchedSeconds++;
     updateTimer();
     if (watchedSeconds >= REQUIRED_SECONDS) {
       enableSubmission();
@@ -92,13 +92,14 @@ function startCounting() {
   }, 1000);
   document.getElementById('startBtn').disabled = true;
   document.getElementById('pauseBtn').disabled = false;
+  document.getElementById('resetBtn').disabled = false;
 }
 
 function stopCounting() {
   if (!playing) return;
   playing = false;
   clearInterval(intervalTick);
-  document.getElementById('startBtn').disabled = false;
+  intervalTick = null;
   document.getElementById('pauseBtn').disabled = true;
 }
 
@@ -106,53 +107,48 @@ function updateTimer() {
   const remain = Math.max(0, REQUIRED_SECONDS - watchedSeconds);
   const mm = String(Math.floor(remain / 60)).padStart(2,'0');
   const ss = String(remain % 60).padStart(2,'0');
-  document.getElementById('timerDisplay').textContent = mm + ":" + ss;
+  document.getElementById('timerDisplay').textContent = `${mm}:${ss}`;
 }
 
 function enableSubmission() {
   document.getElementById('submitBtn').disabled = false;
   document.getElementById('result').style.display = 'block';
-  document.getElementById('result').textContent = "30 seconds completed. Submit now.";
+  document.getElementById('result').textContent = "30 seconds completed. You may submit now.";
 }
 
-document.getElementById('startBtn').addEventListener('click', () => {
-  if (player && player.playVideo) player.playVideo();
-  startCounting();
+// === DYNAMIC GOOGLE FORM PREFILL URL ===
+function getPrefillURL(regID) {
+  return "https://docs.google.com/forms/d/e/1FAIpQLScKHQC-IcY6dVXWzJz75Hcdos3wFZMbRAVq70EnpCtkK1kPMA/viewform"
+       + "?usp=pp_url&entry.1776124627=" + encodeURIComponent(regID);
+}
+
+// === FINAL SUBMIT BUTTON (ONLY THIS ONE) ===
+document.getElementById('submitBtn').addEventListener('click', function() {
+  const regID = document.getElementById('regid').value.trim();
+
+  if (!regID) return alert("Please enter your Registration ID");
+  if (!/^GSY2025-/.test(regID)) return alert("Invalid Registration ID");
+
+  const url = getPrefillURL(regID);
+  window.location.href = url;  // redirect to Google Form
 });
 
+// Pause button
 document.getElementById('pauseBtn').addEventListener('click', () => {
   if (player && player.pauseVideo) player.pauseVideo();
   stopCounting();
 });
 
+// Reset button
 document.getElementById('resetBtn').addEventListener('click', () => {
   watchedSeconds = 0;
   updateTimer();
-});
-
-document.getElementById('submitBtn').addEventListener('click', () => {
-  const reg = document.getElementById('regid').value.trim();
-  if (!reg) return alert("Enter Registration ID");
-
-  const payload = {
-    token: "GSY2025_EventSecureKey_9f72B!xQ48pZ",
-    registrationID: reg
-  };
-
-  fetch("https://script.googleusercontent.com/macros/library/d/1JMksDTl64V-_RrHiofZmfbANfB_MVXIP_Nejvbun_Kin0mzLCmz5Hf-i/2", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  })
-  .then(r => r.json())
-  .then(resp => {
-    if (resp.success) {
-      document.getElementById('result').textContent = "Test submission successful!";
-    } else {
-      document.getElementById('result').textContent = "Error: " + resp.error;
-    }
-  });
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('result').style.display = 'none';
+  stopCounting();
+  document.getElementById('startBtn').disabled = false;
 });
 </script>
+
 </body>
 </html>
