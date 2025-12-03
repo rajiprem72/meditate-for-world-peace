@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TEST MODE — International Meditation Day</title>
+<style>
+  body { font-family: Arial, sans-serif; margin:0; background:#f6f8fb; color:#222; }
+  .wrap { max-width:900px; margin:28px auto; padding:18px; }
+  h1 { text-align:center; color:#b22; }
+  .player { background:#000; border-radius:10px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.12); }
+  iframe { width:100%; height:520px; border:0; display:block; }
+  .info { margin-top:12px; padding:12px; background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+  .timer { font-size:22px; font-weight:700; color:#b22; }
+  .notice { font-size:14px; color:#444; margin-top:8px; }
+  .controls { margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+  input[type="text"] { padding:10px; width:100%; max-width:360px; border-radius:6px; border:1px solid #ddd; }
+  button { padding:10px 14px; border-radius:8px; border:0; background:#4e46e5; color:#fff; cursor:pointer; box-shadow:0 4px 12px rgba(78,70,229,0.18); }
+  button[disabled] { opacity:0.6; cursor:not-allowed; }
+  .small { font-size:13px; color:#666; margin-top:10px; }
+  .success { margin-top:16px; padding:10px; background:#e6fff0; border-radius:6px; color:#0b7a3a; border:1px solid #bfe7c6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TEST MODE — 30 Second Completion</h1>
+
+  <div class="player" id="playerWrap">
+    <iframe id="ytplayer"
+      src="https://www.youtube-nocookie.com/embed/r1WuDMFKMpE?enablejsapi=1&rel=0&modestbranding=1"
+      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+  </div>
+
+  <div class="info">
+    <div><strong>TEST MODE — Required Watch Time: 30 Seconds</strong></div>
+    <div class="timer" id="timerDisplay">00:30</div>
+    <div class="notice">This is ONLY for testing. Real event page uses 22:49.</div>
+
+    <div class="controls">
+      <button id="startBtn">Start Session</button>
+      <button id="pauseBtn" disabled>Pause</button>
+      <button id="resetBtn" disabled>Reset</button>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label><strong>Your Registration ID</strong></label><br>
+      <input type="text" id="regid" placeholder="GSY2025-xxxxxx" />
+    </div>
+
+    <div style="margin-top:12px;">
+      <button id="submitBtn" disabled>Submit Completion</button>
+    </div>
+
+    <div class="small">Timer will count only while video is playing.</div>
+
+    <div id="result" class="success" style="display:none;"></div>
+  </div>
+</div>
+<script>
+const REQUIRED_SECONDS = 30; // 30-second test
+let watchedSeconds = 0;
+let playing = false;
+let intervalTick = null;
+
+// Load YouTube API
+let tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+document.head.appendChild(tag);
+
+let player;
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player('ytplayer', {
+    events: { 'onStateChange': onPlayerStateChange }
+  });
+}
+
+function onPlayerStateChange(e) {
+  if (e.data === 1) startCounting();
+  else stopCounting();
+}
+
+function startCounting() {
+  if (playing) return;
+  playing = true;
+  intervalTick = setInterval(() => {
+    watchedSeconds++;
+    updateTimer();
+    if (watchedSeconds >= REQUIRED_SECONDS) {
+      enableSubmission();
+      stopCounting();
+    }
+  }, 1000);
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('pauseBtn').disabled = false;
+  document.getElementById('resetBtn').disabled = false;
+}
+
+function stopCounting() {
+  if (!playing) return;
+  playing = false;
+  clearInterval(intervalTick);
+  intervalTick = null;
+  document.getElementById('pauseBtn').disabled = true;
+}
+
+function updateTimer() {
+  const remain = Math.max(0, REQUIRED_SECONDS - watchedSeconds);
+  const mm = String(Math.floor(remain / 60)).padStart(2,'0');
+  const ss = String(remain % 60).padStart(2,'0');
+  document.getElementById('timerDisplay').textContent = `${mm}:${ss}`;
+}
+
+function enableSubmission() {
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('result').textContent = "30 seconds completed. You may submit now.";
+}
+
+// === DYNAMIC GOOGLE FORM PREFILL URL ===
+function getPrefillURL(regID) {
+  return "https://docs.google.com/forms/d/e/1FAIpQLScKHQC-IcY6dVXWzJz75Hcdos3wFZMbRAVq70EnpCtkK1kPMA/viewform"
+       + "?usp=pp_url&entry.1776124627=" + encodeURIComponent(regID);
+}
+
+// === FINAL SUBMIT BUTTON (ONLY THIS ONE) ===
+document.getElementById('submitBtn').addEventListener('click', function() {
+  const regID = document.getElementById('regid').value.trim();
+
+  if (!regID) return alert("Please enter your Registration ID");
+  if (!/^GSY2025-/.test(regID)) return alert("Invalid Registration ID");
+
+  const url = getPrefillURL(regID);
+  window.location.href = url;  // redirect to Google Form
+});
+
+// Pause button
+document.getElementById('pauseBtn').addEventListener('click', () => {
+  if (player && player.pauseVideo) player.pauseVideo();
+  stopCounting();
+});
+
+// Reset button
+document.getElementById('resetBtn').addEventListener('click', () => {
+  watchedSeconds = 0;
+  updateTimer();
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('result').style.display = 'none';
+  stopCounting();
+  document.getElementById('startBtn').disabled = false;
+});
+</script>
+
+</body>
+</html>
