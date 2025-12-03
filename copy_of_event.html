@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>International Meditation Day — Event</title>
+<style>
+  body { font-family: Arial, sans-serif; margin:0; background:#f6f8fb; color:#222; }
+  .wrap { max-width:900px; margin:28px auto; padding:18px; }
+  h1 { text-align:center; color:#2b2b7a; }
+  .player { background:#000; border-radius:10px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.12); }
+  iframe { width:100%; height:520px; border:0; display:block; }
+  .info { margin-top:12px; padding:12px; background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+  .timer { font-size:22px; font-weight:700; color:#2b2b7a; }
+  .notice { font-size:14px; color:#444; margin-top:8px; }
+  .controls { margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+  input[type="text"] { padding:10px; width:100%; max-width:360px; border-radius:6px; border:1px solid #ddd; }
+  button { padding:10px 14px; border-radius:8px; border:0; background:#4e46e5; color:#fff; cursor:pointer; box-shadow:0 4px 12px rgba(78,70,229,0.18); }
+  button[disabled] { opacity:0.6; cursor:not-allowed; }
+  .small { font-size:13px; color:#666; margin-top:10px; }
+  .success { margin-top:16px; padding:10px; background:#e6fff0; border-radius:6px; color:#0b7a3a; border:1px solid #bfe7c6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>International Meditation Day — Online Group Meditation</h1>
+
+  <div class="player" id="playerWrap">
+    <!-- YouTube iframe -->
+    <iframe id="ytplayer"
+      src="https://www.youtube-nocookie.com/embed/r1WuDMFKMpE?enablejsapi=1&rel=0&modestbranding=1"
+      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+  </div>
+
+  <div class="info">
+    <div><strong>Watch the entire guided meditation (22:49)</strong></div>
+    <div class="timer" id="timerDisplay">22:49</div>
+    <div class="notice">Timer starts when you press <b>Start Session</b> and the video is playing. The completion button appears only after full time is accumulated.</div>
+
+    <div class="controls" style="margin-top:14px;">
+      <button id="startBtn">Start Session</button>
+      <button id="pauseBtn" disabled>Pause</button>
+      <button id="resetBtn" disabled>Reset</button>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label for="regid"><strong>Your Registration ID</strong> (GSY2025-xxxxxx)</label><br>
+      <input type="text" id="regid" placeholder="Enter your Registration ID" />
+    </div>
+
+    <div style="margin-top:12px;">
+      <button id="submitBtn" disabled>Submit Completion</button>
+    </div>
+
+    <div class="small">Note: The page monitors actual playback time. Avoid pausing or switching tabs. If you refresh, your accumulated watched time is reset.</div>
+
+    <div id="result" class="success" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+/*
+  Event page logic:
+  - Uses YouTube IFrame API to monitor play/pause and accumulate played seconds.
+  - Required total = 1369 seconds (22*60 + 49)
+  - Submit button enabled only when watchedSeconds >= requiredSeconds
+  - When submitting, does POST to Apps Script endpoint with { token, registrationID }
+*/
+
+const REQUIRED_SECONDS = 22*60 + 49; // 1369
+let watchedSeconds = 0;
+let lastPlayTimestamp = 0;
+let playing = false;
+let intervalTick = null;
+
+// Load YouTube IFrame API
+let tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+document.head.appendChild(tag);
+
+let player;
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player('ytplayer', {
+    events: {
+      'onStateChange': onPlayerStateChange
+    }
+  });
+}
+
+// handle state changes
+function onPlayerStateChange(event) {
+  const state = event.data;
+  // states: -1 (unstarted), 0 ended, 1 playing, 2 paused, 3 buffering
+  if (state === 1) {
+    startCounting();
+  } else {
+    stopCounting();
+  }
+}
+
+function startCounting() {
+  if (playing) return;
+  playing = true;
+  lastPlayTimestamp = Date.now();
+  intervalTick = setInterval(() => {
+    // add 1 second per tick
+    watchedSeconds += 1;
+    updateTimerDisplay();
+    if (watchedSeconds >= REQUIRED_SECONDS) {
+      enableSubmission();
+      stopCounting(); // stop further increment
+    }
+  }, 1000);
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('pauseBtn').disabled = false;
+  document.getElementById('resetBtn').disabled = false;
+}
+
+function stopCounting() {
+  if (!playing) return;
+  playing = false;
+  if (intervalTick) {
+    clearInterval(intervalTick);
+    intervalTick = null;
+  }
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('pauseBtn').disabled = true;
+}
+
+function resetCounting() {
+  watchedSeconds = 0;
+  updateTimerDisplay();
+  enableSubmission(false);
+  stopCounting();
+  document.getElementById('resetBtn').disabled = true;
+  document.getElementById('startBtn').disabled = false;
+}
+
+function updateTimerDisplay() {
+  const remaining = Math.max(0, REQUIRED_SECONDS - watchedSeconds);
+  const mm = Math.floor(remaining / 60).toString().padStart(2,'0');
+  const ss = (remaining % 60).toString().padStart(2,'0');
+  document.getElementById('timerDisplay').textContent = mm + ":" + ss;
+}
+
+function enableSubmission(yes = true) {
+  document.getElementById('submitBtn').disabled = !yes;
+  if (yes) {
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').textContent = "You have completed the required watching time. Please enter your Registration ID and click Submit Completion.";
+    document.getElementById('result').style.color = "#0b7a3a";
+  } else {
+    document.getElementById('result').style.display = 'none';
+  }
+}
+
+// UI buttons
+document.getElementById('startBtn').addEventListener('click', function(){
+  // start video playback as well if possible
+  if (player && typeof player.playVideo === 'function') { player.playVideo(); }
+  startCounting();
+});
+document.getElementById('pauseBtn').addEventListener('click', function(){
+  if (player && typeof player.pauseVideo === 'function') { player.pauseVideo(); }
+  stopCounting();
+});
+document.getElementById('resetBtn').addEventListener('click', function(){
+  if (player && typeof player.stopVideo === 'function') { player.stopVideo(); }
+  resetCounting();
+});
+
+// Submission logic
+document.getElementById('submitBtn').addEventListener('click', function(){
+  const reg = document.getElementById('regid').value.trim();
+  if (!reg) { alert("Please enter your Registration ID (GSY2025-xxxxxx)"); return; }
+  // Basic format check
+  if (!/^GSY2025-/.test(reg)) { alert("Registration ID format seems wrong. It should start with GSY2025-"); return; }
+
+  // Prepare payload
+  const payload = {
+    token: "GSY2025_EventSecureKey_9f72B!xQ48pZ", // <<-- replace with same secret
+    registrationID: reg
+  };
+
+  // Disable button while sending
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('result').textContent = "Submitting... please wait.";
+
+  fetch("https://script.google.com/macros/s/AKfycbwWC3XaVd-NDEi8rOEbFtiYPn9AnNNlMN6wR3oe2tZgbzghbsNvS2EGFrzQDcpehLztww/exec", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+  .then(r => r.json())
+  .then(resp => {
+    if (resp && resp.success) {
+      document.getElementById('result').textContent = "Completed successfully. Certificate will be emailed shortly. Thank you!";
+      document.getElementById('result').style.color = "#0b7a3a";
+    } else {
+      document.getElementById('result').textContent = "Error: " + (resp.error || "Unknown error");
+      document.getElementById('result').style.color = "#b33";
+      document.getElementById('submitBtn').disabled = false;
+    }
+  })
+  .catch(err => {
+    document.getElementById('result').textContent = "Network error: " + err;
+    document.getElementById('result').style.color = "#b33";
+    document.getElementById('submitBtn').disabled = false;
+  });
+});
+</script>
+</body>
+</html>
