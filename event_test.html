@@ -3,115 +3,165 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Meditation Event – Test Mode</title>
+<title>TEST MODE — International Meditation Day</title>
 
 <style>
   body { font-family: Arial, sans-serif; background:#f6f8fb; margin:0; }
   .wrap { max-width:900px; margin:25px auto; padding:20px; }
-  h1 { text-align:center; color:#b22; }
-  .player { background:#000; border-radius:10px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.12); }
-  iframe { width:100%; height:520px; border:0; }
-  .info { background:#fff; padding:18px; border-radius:10px; margin-top:18px;
-          box-shadow:0 3px 10px rgba(0,0,0,0.08); }
-  .timer { font-size:24px; font-weight:bold; color:#b22; margin-top:8px; }
-  .notice { font-size:14px; color:#444; margin-top:8px; line-height:1.6; }
-  input[type="text"] { padding:10px; width:100%; max-width:360px; border-radius:6px;
-                       border:1px solid #ccc; margin-top:4px; }
-  button { padding:12px 20px; border:0; border-radius:8px; background:#4e46e5; 
-           color:#fff; margin-top:12px; cursor:pointer; font-size:16px; }
-  button[disabled] { opacity:0.55; cursor:not-allowed; }
-  .success { margin-top:12px; padding:10px; background:#e9ffe6; border-left:5px solid #28a745;
-             border-radius:4px; font-size:14px; color:#155724; display:none; }
-</style>
-</head>
 
+  h1 { text-align:center; color:#b22; }
+
+  /* Player Container */
+  .player-container {
+    position: relative;
+    width: 100%;
+    height: 520px;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.12);
+  }
+
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+
+  /* Blur Lock Overlay */
+  .lock-overlay {
+    position:absolute;
+    top:0; left:0;
+    width:100%; height:100%;
+    backdrop-filter: blur(6px);
+    background:rgba(0,0,0,0.45);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:20px;
+    font-size:20px;
+    z-index:10;
+  }
+
+  .lock-overlay h2 {
+    margin:0;
+    font-size:28px;
+  }
+
+  .lock-overlay p {
+    margin-top:10px;
+    font-size:18px;
+  }
+
+  .timer-box {
+    margin-top:20px;
+    background:#fff;
+    padding:15px;
+    border-radius:8px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.08);
+    font-size:20px;
+    font-weight:bold;
+    color:#b22;
+    text-align:center;
+  }
+
+  input[type="text"] {
+    padding:10px;
+    width:100%;
+    max-width:350px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    margin-top:8px;
+  }
+
+  button {
+    margin-top:14px;
+    padding:12px 15px;
+    border-radius:8px;
+    border:0;
+    background:#4e46e5;
+    color:#fff;
+    cursor:pointer;
+    font-size:16px;
+  }
+
+  button:disabled { opacity:0.6; cursor:not-allowed; }
+
+  .success {
+    margin-top:20px;
+    background:#e6fff0;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #bfe7c6;
+    color:#0a6a36;
+    display:none;
+  }
+</style>
+
+</head>
 <body>
 <div class="wrap">
 
-  <h1>TEST MODE — Meditation Event</h1>
+<h1>TEST MODE — 30 Second Completion</h1>
 
-  <div class="info">
-    <strong>⏳ Video & Submission will unlock at: <span id="unlockTime"></span></strong><br>
-    <span style="font-size:14px;color:#666;">(For the real event: 21 Dec 2025, 11:00 AM IST)</span>
-    <br><br>
-    <b>Important Instructions:</b>
-    <ul style="font-size:14px; color:#444; line-height:1.6;">
-      <li>Please keep your Registration ID safe (GSY2025-XXXXXX).</li>
-      <li>You will enter the Registration ID twice – here & in the Google Form.</li>
-      <li>The video play button will be enabled exactly at the event start time.</li>
-      <li>Timer counts only while the video is playing. Do not pause or switch tabs.</li>
-    </ul>
+<!-- PLAYER AREA -->
+<div class="player-container">
+  <iframe id="ytplayer"
+    src="https://www.youtube-nocookie.com/embed/r1WuDMFKMpE?enablejsapi=1&rel=0&modestbranding=1"
+    allow="autoplay; encrypted-media; picture-in-picture"
+    allowfullscreen>
+  </iframe>
+
+  <!-- BLUR & LOCK OVERLAY -->
+  <div id="lockOverlay" class="lock-overlay">
+    <h2>⏳ Video Locked</h2>
+    <p id="unlockText">Video will unlock soon…</p>
   </div>
-
-  <!-- Video Player -->
-  <div class="player" style="margin-top:20px;">
-    <iframe id="ytplayer"
-      src="https://www.youtube-nocookie.com/embed/r1WuDMFKMpE?enablejsapi=1&rel=0&modestbranding=1"
-      allow="autoplay; encrypted-media; picture-in-picture"
-      allowfullscreen></iframe>
-  </div>
-
-  <div class="info">
-    <div><strong>Required Watch Time:</strong> 30 seconds (TEST MODE)</div>
-    <div class="timer" id="timerDisplay">00:30</div>
-
-    <label style="margin-top:12px; display:block;"><strong>Your Registration ID</strong></label>
-    <input type="text" id="regid" placeholder="GSY2025-xxxxxx" disabled />
-
-    <button id="submitBtn" disabled>Submit Completion</button>
-    <div id="result" class="success"></div>
-  </div>
-
 </div>
 
+<div class="timer-box" id="timerDisplay">00:30</div>
+
+<!-- USER INPUT -->
+<div style="margin-top:20px;">
+  <label><strong>Your Registration ID</strong></label><br>
+  <input type="text" id="regid" placeholder="GSY2025-xxxxxx">
+</div>
+
+<button id="submitBtn" disabled>Submit Completion</button>
+
+<div id="result" class="success"></div>
+
 <script>
-// ===== CONFIG =====
-const REQUIRED_SECONDS = 30;   // test mode
-const UNLOCK_HOUR = 21;        // 8 PM
-const UNLOCK_MIN  = 15;        // :45
+// === CONFIGURATION ===
+const REQUIRED_SECONDS = 30;
 
-// ===== GLOBALS =====
+// 🔥 TEST MODE unlock time — change for testing
+const UNLOCK_HOUR = 21;   // 20 = 8 PM
+const UNLOCK_MINUTE = 40; // :45
+
 let watchedSeconds = 0;
+let playing = false;
 let intervalTick = null;
-let unlocked = false;
 
-// Display unlock time
-document.getElementById("unlockTime").textContent = "Today at 8:45 PM";
+function formatTime(num){ return num.toString().padStart(2,'0'); }
 
-// Calculate unlock timestamp
-function isUnlocked() {
-  const now = new Date();
-  const unlock = new Date(now.getFullYear(), now.getMonth(), now.getDate(), UNLOCK_HOUR, UNLOCK_MIN, 0);
-  return now >= unlock;
-}
+// === Calculate today's unlock time ===
+const now = new Date();
+const unlockAt = new Date();
+unlockAt.setHours(UNLOCK_HOUR, UNLOCK_MINUTE, 0, 0);
 
-// Initially lock everything
-function lockAll() {
-  document.getElementById("regid").disabled = true;
-  document.getElementById("submitBtn").disabled = true;
-}
+// Show unlock time to user
+let hr = UNLOCK_HOUR % 12 || 12;
+let ampm = UNLOCK_HOUR >= 12 ? "PM" : "AM";
+document.getElementById("unlockText").innerHTML =
+  `⏳ Video & Submission will unlock today at <br><b>${hr}:${formatTime(UNLOCK_MINUTE)} ${ampm}</b><br><br>
+   Please keep your Registration ID safe.<br>
+   You must enter it twice: here & in the Google Form.`;
 
-// Unlock when time comes
-function checkUnlock() {
-  if (isUnlocked()) {
-    unlocked = true;
-    document.getElementById("regid").disabled = false;
-    return true;
-  }
-  return false;
-}
-
-lockAll();
-
-// Check every 2 seconds if time reached
-setInterval(() => {
-  if (!unlocked && checkUnlock()) {
-    console.log("Unlocked!");
-  }
-}, 2000);
-
-
-// ===== YOUTUBE API =====
+// === Load YouTube API ===
 let tag = document.createElement('script');
 tag.src = "https://www.youtube.com/iframe_api";
 document.head.appendChild(tag);
@@ -123,60 +173,83 @@ function onYouTubeIframeAPIReady() {
   });
 }
 
+// === Disable player until unlock time ===
+let unlocked = false;
+
+function checkUnlock() {
+  const now = new Date();
+  if (now >= unlockAt) {
+    unlocked = true;
+    document.getElementById("lockOverlay").style.display = "none";
+  }
+}
+setInterval(checkUnlock, 1000);
+checkUnlock();
+
+// === Player State Handler ===
 function onPlayerStateChange(e) {
+
   if (!unlocked) {
-    alert("Video will be enabled only at the event start time.");
-    player.pauseVideo();
+    // Immediately stop the video
+    if (player && player.pauseVideo) player.pauseVideo();
+
+    alert("The meditation will start at the scheduled time.\nPlease wait until the unlocking time.");
     return;
   }
 
+  // Start counting only when video plays
   if (e.data === 1) startCounting();
   else stopCounting();
 }
 
 function startCounting() {
-  if (intervalTick) return;
+  if (playing) return;
+  playing = true;
+
   intervalTick = setInterval(() => {
     watchedSeconds++;
     updateTimer();
+
     if (watchedSeconds >= REQUIRED_SECONDS) {
       enableSubmission();
       stopCounting();
     }
+
   }, 1000);
 }
 
 function stopCounting() {
+  if (!playing) return;
+  playing = false;
   clearInterval(intervalTick);
-  intervalTick = null;
 }
 
 function updateTimer() {
   const remain = Math.max(0, REQUIRED_SECONDS - watchedSeconds);
-  const mm = String(Math.floor(remain / 60)).padStart(2, "0");
-  const ss = String(remain % 60).padStart(2, "0");
-  document.getElementById("timerDisplay").textContent = `${mm}:${ss}`;
+  const mm = formatTime(Math.floor(remain / 60));
+  const ss = formatTime(remain % 60);
+  document.getElementById('timerDisplay').textContent = `${mm}:${ss}`;
 }
 
 function enableSubmission() {
-  document.getElementById("submitBtn").disabled = false;
-  document.getElementById("result").style.display = "block";
-  document.getElementById("result").textContent =
-    "30 seconds completed. You may submit now.";
+  document.getElementById('submitBtn').disabled = false;
+  const r = document.getElementById('result');
+  r.style.display = 'block';
+  r.textContent = "✔ You completed 30 seconds. You can now submit.";
 }
 
-// ===== GOOGLE FORM PREFILL URL =====
+// === Prefill URL ===
 function getPrefillURL(regID) {
-  return "https://docs.google.com/forms/d/e/1FAIpQLSdWArsVRMeGS-uT5KuhYTUExa1mjk5uS25nd-13F2QCsotcaw/viewform"
-       + "?usp=pp_url&entry.1776124627=" + encodeURIComponent(regID);
+  return "https://docs.google.com/forms/d/e/1FAIpQLSdWArsVRMeGS-uT5KuhYTUExa1mjk5uS25nd-13F2QCsotcaw/viewform?"
+       + "usp=pp_url&entry.1776124627=" + encodeURIComponent(regID);
 }
 
-// ===== SUBMIT =====
-document.getElementById("submitBtn").addEventListener("click", () => {
-  const regID = document.getElementById("regid").value.trim();
+// === Submit Handler ===
+document.getElementById('submitBtn').addEventListener('click', function() {
+  const regID = document.getElementById('regid').value.trim();
 
   if (!regID) return alert("Please enter your Registration ID");
-  if (!/^GSY2025-/.test(regID)) return alert("Invalid Registration ID format");
+  if (!/^GSY2025-/.test(regID)) return alert("Invalid Registration ID");
 
   window.location.href = getPrefillURL(regID);
 });
