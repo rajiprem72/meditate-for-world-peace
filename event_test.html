@@ -9,7 +9,7 @@
   .wrap { max-width:900px; margin:28px auto; padding:18px; }
   h1 { text-align:center; color:#b22; }
   .player { background:#000; border-radius:10px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.12); }
-  iframe { width:100%; height:520px; border:0; display:block; }
+  iframe { width:100%; height:520px; border:0; display:block; pointer-events:none; opacity:0.4; }
   .info { margin-top:12px; padding:12px; background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
   .timer { font-size:22px; font-weight:700; color:#b22; }
   .notice { font-size:14px; color:#444; margin-top:8px; }
@@ -19,12 +19,24 @@
   button[disabled] { opacity:0.6; cursor:not-allowed; }
   .small { font-size:13px; color:#666; margin-top:10px; }
   .success { margin-top:16px; padding:10px; background:#e6fff0; border-radius:6px; color:#0b7a3a; border:1px solid #bfe7c6; }
+  .blocked-msg { background:#fff3cd; padding:12px; border-radius:6px; border:1px solid #ffeeba; margin-top:14px; color:#8a6d3b; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>TEST MODE — 30 Second Completion</h1>
 
+  <!-- Instructions -->
+  <div class="blocked-msg" id="lockMessage">
+    <b>The Meditation Event will begin at <span id="startTimeText"></span>.</b><br><br>
+    ✔ All buttons will unlock automatically at the start time.<br>
+    ✔ You must enter your <b>Registration ID (GSY2025-XXXXXX)</b> correctly.<br>
+    ✔ You will enter it <b>twice</b> — here and again in the Google Form.<br>
+    ✔ Keep your Registration ID safe. Check your email if you forgot it.<br><br>
+    Please wait…
+  </div>
+
+  <!-- YouTube Player -->
   <div class="player" id="playerWrap">
     <iframe id="ytplayer"
       src="https://www.youtube-nocookie.com/embed/r1WuDMFKMpE?enablejsapi=1&rel=0&modestbranding=1"
@@ -34,40 +46,74 @@
   <div class="info">
     <div><strong>TEST MODE — Required Watch Time: 30 Seconds</strong></div>
     <div class="timer" id="timerDisplay">00:30</div>
-    <div class="notice">This is ONLY for testing. Real event page uses 22:49.</div>
+    <div class="notice">Timer will count only while the video is playing.</div>
 
     <div class="controls">
-      <button id="startBtn">Start Session</button>
+      <button id="startBtn" disabled>Start Session</button>
       <button id="pauseBtn" disabled>Pause</button>
       <button id="resetBtn" disabled>Reset</button>
     </div>
 
     <div style="margin-top:12px;">
       <label><strong>Your Registration ID</strong></label><br>
-      <input type="text" id="regid" placeholder="GSY2025-xxxxxx" />
+      <input type="text" id="regid" placeholder="GSY2025-xxxxxx" disabled />
     </div>
 
     <div style="margin-top:12px;">
       <button id="submitBtn" disabled>Submit Completion</button>
     </div>
 
-    <div class="small">Timer will count only while video is playing.</div>
-
     <div id="result" class="success" style="display:none;"></div>
   </div>
 </div>
+
 <script>
-const REQUIRED_SECONDS = 30; // 30-second test
+// ===============================
+// CONFIG — EVENT START TIME
+// ===============================
+const EVENT_START = new Date();
+EVENT_START.setHours(20, 45, 0, 0);   // 8:45 PM today
+
+document.getElementById("startTimeText").textContent =
+  EVENT_START.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+// ===============================
+const REQUIRED_SECONDS = 30;
 let watchedSeconds = 0;
 let playing = false;
 let intervalTick = null;
+let player;
 
-// Load YouTube API
+// Disable buttons & video initially
+function lockUI() {
+  document.querySelector("iframe").style.pointerEvents = "none";
+  document.getElementById("startBtn").disabled = true;
+  document.getElementById("pauseBtn").disabled = true;
+  document.getElementById("resetBtn").disabled = true;
+  document.getElementById("regid").disabled = true;
+  document.getElementById("submitBtn").disabled = true;
+}
+
+// Unlock UI at correct time
+function unlockUI() {
+  document.querySelector("iframe").style.pointerEvents = "auto";
+  document.getElementById("startBtn").disabled = false;
+  document.getElementById("regid").disabled = false;
+  document.getElementById("lockMessage").style.display = "none";
+}
+
+// Check time every second
+setInterval(() => {
+  if (new Date() >= EVENT_START) unlockUI();
+}, 1000);
+
+// ===============================
+// YouTube API
+// ===============================
 let tag = document.createElement('script');
 tag.src = "https://www.youtube.com/iframe_api";
 document.head.appendChild(tag);
 
-let player;
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('ytplayer', {
     events: { 'onStateChange': onPlayerStateChange }
@@ -90,6 +136,7 @@ function startCounting() {
       stopCounting();
     }
   }, 1000);
+
   document.getElementById('startBtn').disabled = true;
   document.getElementById('pauseBtn').disabled = false;
   document.getElementById('resetBtn').disabled = false;
@@ -116,27 +163,18 @@ function enableSubmission() {
   document.getElementById('result').textContent = "30 seconds completed. You may submit now.";
 }
 
-// === DYNAMIC GOOGLE FORM PREFILL URL ===
+// Prefill Google Form
 function getPrefillURL(regID) {
   return "https://docs.google.com/forms/d/e/1FAIpQLSdWArsVRMeGS-uT5KuhYTUExa1mjk5uS25nd-13F2QCsotcaw/viewform?"
-       + "?usp=pp_url&entry.1776124627=" + encodeURIComponent(regID);
+       + "usp=pp_url&entry.1776124627=" + encodeURIComponent(regID);
 }
 
-// === FINAL SUBMIT BUTTON (ONLY THIS ONE) ===
 document.getElementById('submitBtn').addEventListener('click', function() {
   const regID = document.getElementById('regid').value.trim();
-
   if (!regID) return alert("Please enter your Registration ID");
   if (!/^GSY2025-/.test(regID)) return alert("Invalid Registration ID");
 
-  const url = getPrefillURL(regID);
-  window.location.href = url;  // redirect to Google Form
-});
-
-// Pause button
-document.getElementById('pauseBtn').addEventListener('click', () => {
-  if (player && player.pauseVideo) player.pauseVideo();
-  stopCounting();
+  window.location.href = getPrefillURL(regID);
 });
 
 // Reset button
@@ -148,7 +186,10 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   stopCounting();
   document.getElementById('startBtn').disabled = false;
 });
-</script>
 
+// Lock UI immediately on load
+lockUI();
+
+</script>
 </body>
 </html>
