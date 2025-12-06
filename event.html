@@ -3,77 +3,112 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>International Meditation Day — Event</title>
+<title>International Meditation Day – Event Test Page</title>
+
 <style>
   body { font-family: Arial, sans-serif; margin:0; background:#f6f8fb; color:#222; }
   .wrap { max-width:900px; margin:28px auto; padding:18px; }
-  h1 { text-align:center; color:#2b2b7a; }
-  .player { background:#000; border-radius:10px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.12); }
+  h1 { text-align:center; color:#b22; }
+  .player { background:#000; border-radius:10px; overflow:hidden; opacity:0.25; pointer-events:none; }
   iframe { width:100%; height:520px; border:0; display:block; }
   .info { margin-top:12px; padding:12px; background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
-  .timer { font-size:22px; font-weight:700; color:#2b2b7a; }
-  .notice { font-size:14px; color:#444; margin-top:8px; }
-  .controls { margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+  .timer { font-size:22px; font-weight:700; color:#b22; }
   input[type="text"] { padding:10px; width:100%; max-width:360px; border-radius:6px; border:1px solid #ddd; }
-  button { padding:10px 14px; border-radius:8px; border:0; background:#4e46e5; color:#fff; cursor:pointer; box-shadow:0 4px 12px rgba(78,70,229,0.18); }
-  button[disabled] { opacity:0.6; cursor:not-allowed; }
-  .small { font-size:13px; color:#666; margin-top:10px; }
-  .success { margin-top:16px; padding:10px; background:#e6fff0; border-radius:6px; color:#0b7a3a; border:1px solid #bfe7c6; }
+  button { padding:10px 14px; border-radius:8px; border:0; background:#4e46e5; color:#fff;
+           cursor:pointer; box-shadow:0 4px 12px rgba(78,70,229,0.18); }
+  button[disabled] { opacity:0.55; cursor:not-allowed; }
+  .lockbox { margin-top:15px; padding:12px; background:#fff3cd; border-left:5px solid #ffca2c;
+             font-size:15px; border-radius:6px; }
+  .success { margin-top:16px; padding:14px; background:#e6fff0; border-radius:6px; 
+             color:#0b7a3a; border:1px solid #bfe7c6; font-size:16px; font-weight:bold; }
 </style>
 </head>
+
 <body>
 <div class="wrap">
-  <h1>International Meditation Day — Online Group Meditation</h1>
+  <h1>International Meditation Day – Event Test</h1>
+
+  <div id="lockMessage" class="lockbox"></div>
 
   <div class="player" id="playerWrap">
-    <!-- YouTube iframe -->
     <iframe id="ytplayer"
       src="https://www.youtube-nocookie.com/embed/r1WuDMFKMpE?enablejsapi=1&rel=0&modestbranding=1"
       allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
   </div>
 
   <div class="info">
-    <div><strong>Watch the entire guided meditation (22:49)</strong></div>
-    <div class="timer" id="timerDisplay">22:49</div>
-    <div class="notice">Timer starts when you press <b>Start Session</b> and the video is playing. The completion button appears only after full time is accumulated.</div>
-
-    <div class="controls" style="margin-top:14px;">
-      <button id="startBtn">Start Session</button>
-      <button id="pauseBtn" disabled>Pause</button>
-      <button id="resetBtn" disabled>Reset</button>
-    </div>
+    <div><strong>Required Watch Time:</strong> 30 Seconds (TEST MODE)</div>
+    <div class="timer" id="timerDisplay">00:30</div>
 
     <div style="margin-top:12px;">
-      <label for="regid"><strong>Your Registration ID</strong> (GSY2025-xxxxxx)</label><br>
-      <input type="text" id="regid" placeholder="Enter your Registration ID" />
+      <label><strong>Your Registration ID</strong></label><br>
+      <input type="text" id="regid" placeholder="GSY2025-XXXXXX" disabled />
     </div>
 
     <div style="margin-top:12px;">
       <button id="submitBtn" disabled>Submit Completion</button>
     </div>
 
-    <div class="small">Note: The page monitors actual playback time. Avoid pausing or switching tabs. If you refresh, your accumulated watched time is reset.</div>
-
     <div id="result" class="success" style="display:none;"></div>
   </div>
 </div>
 
 <script>
-/*
-  Event page logic:
-  - Uses YouTube IFrame API to monitor play/pause and accumulate played seconds.
-  - Required total = 1369 seconds (22*60 + 49)
-  - Submit button enabled only when watchedSeconds >= requiredSeconds
-  - When submitting, does POST to Apps Script endpoint with { token, registrationID }
-*/
+// =============================
+// CONFIGURATION – CHANGE FOR TESTING
+// =============================
+const EVENT_YEAR  = 2026;
+const EVENT_MONTH = 0;   // January = 0 (0-based)
+const EVENT_DAY   = 21;    // 21 Jan 2026
+const EVENT_HOUR  = 11;   // 11 am
+const EVENT_MIN   = 00;   // 00 minutes
 
-const REQUIRED_SECONDS = 22*60 + 49; // 1369
+const REQUIRED_SECONDS = 1369;
+
+// =============================
+let unlockTime = new Date(EVENT_YEAR, EVENT_MONTH, EVENT_DAY, EVENT_HOUR, EVENT_MIN);
 let watchedSeconds = 0;
-let lastPlayTimestamp = 0;
 let playing = false;
 let intervalTick = null;
+let submitted = localStorage.getItem("event_submitted") === "YES";
 
-// Load YouTube IFrame API
+// =============================
+// FORMATTED DATE FOR DISPLAY
+// =============================
+const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function formatFullDate(d){
+  return `${weekday[d.getDay()]}, ${String(d.getDate()).padStart(2,'0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// =============================
+// INITIAL PAGE STATE
+// =============================
+const lockMsg = document.getElementById("lockMessage");
+lockMsg.innerHTML = `
+  ⏳ The video and submission will unlock on  
+  <b>${formatFullDate(unlockTime)} at ${unlockTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</b>.<br><br>
+  Please keep your Registration ID safe (GSY2025-XXXXXX).  
+  You must enter it twice: once here and once in the Event Completion Form.
+`;
+
+if (submitted) {
+  showAlreadySubmitted();
+}
+
+function showAlreadySubmitted() {
+  document.getElementById("playerWrap").style.opacity = "0.25";
+  document.getElementById("playerWrap").style.pointerEvents = "none";
+  document.getElementById("regid").disabled = true;
+  document.getElementById("submitBtn").disabled = true;
+  document.getElementById("result").style.display = "block";
+  document.getElementById("result").textContent =
+    "✔ You have already submitted your participation. Thank you.";
+}
+
+// =============================
+// YOUTUBE API
+// =============================
 let tag = document.createElement('script');
 tag.src = "https://www.youtube.com/iframe_api";
 document.head.appendChild(tag);
@@ -81,133 +116,96 @@ document.head.appendChild(tag);
 let player;
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('ytplayer', {
-    events: {
-      'onStateChange': onPlayerStateChange
-    }
+    events: { 'onStateChange': onPlayerStateChange }
   });
 }
 
-// handle state changes
-function onPlayerStateChange(event) {
-  const state = event.data;
-  // states: -1 (unstarted), 0 ended, 1 playing, 2 paused, 3 buffering
-  if (state === 1) {
-    startCounting();
-  } else {
-    stopCounting();
-  }
+function onPlayerStateChange(e) {
+  if (e.data === 1) startCounting();
+  else stopCounting();
 }
 
+// =============================
+// TIMER
+// =============================
 function startCounting() {
   if (playing) return;
   playing = true;
-  lastPlayTimestamp = Date.now();
+
   intervalTick = setInterval(() => {
-    // add 1 second per tick
-    watchedSeconds += 1;
-    updateTimerDisplay();
+    watchedSeconds++;
+    updateTimer();
     if (watchedSeconds >= REQUIRED_SECONDS) {
       enableSubmission();
-      stopCounting(); // stop further increment
+      stopCounting();
     }
   }, 1000);
-  document.getElementById('startBtn').disabled = true;
-  document.getElementById('pauseBtn').disabled = false;
-  document.getElementById('resetBtn').disabled = false;
 }
 
 function stopCounting() {
-  if (!playing) return;
   playing = false;
-  if (intervalTick) {
-    clearInterval(intervalTick);
-    intervalTick = null;
-  }
-  document.getElementById('startBtn').disabled = false;
-  document.getElementById('pauseBtn').disabled = true;
+  clearInterval(intervalTick);
 }
 
-function resetCounting() {
-  watchedSeconds = 0;
-  updateTimerDisplay();
-  enableSubmission(false);
-  stopCounting();
-  document.getElementById('resetBtn').disabled = true;
-  document.getElementById('startBtn').disabled = false;
+function updateTimer() {
+  const remain = Math.max(0, REQUIRED_SECONDS - watchedSeconds);
+  const mm = String(Math.floor(remain / 60)).padStart(2,'0');
+  const ss = String(remain % 60).padStart(2,'0');
+  document.getElementById('timerDisplay').textContent = `${mm}:${ss}`;
 }
 
-function updateTimerDisplay() {
-  const remaining = Math.max(0, REQUIRED_SECONDS - watchedSeconds);
-  const mm = Math.floor(remaining / 60).toString().padStart(2,'0');
-  const ss = (remaining % 60).toString().padStart(2,'0');
-  document.getElementById('timerDisplay').textContent = mm + ":" + ss;
+function enableSubmission() {
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("result").style.display = "block";
+  document.getElementById("result").textContent = "30 seconds completed. You may submit now.";
 }
 
-function enableSubmission(yes = true) {
-  document.getElementById('submitBtn').disabled = !yes;
-  if (yes) {
-    document.getElementById('result').style.display = 'block';
-    document.getElementById('result').textContent = "You have completed the required watching time. Please enter your Registration ID and click Submit Completion.";
-    document.getElementById('result').style.color = "#0b7a3a";
-  } else {
-    document.getElementById('result').style.display = 'none';
+// =============================
+// UNLOCK CHECK
+// =============================
+function checkUnlock() {
+  let now = new Date();
+  if (now >= unlockTime && !submitted) {
+    unlockPage();
   }
 }
 
-// UI buttons
-document.getElementById('startBtn').addEventListener('click', function(){
-  // start video playback as well if possible
-  if (player && typeof player.playVideo === 'function') { player.playVideo(); }
-  startCounting();
-});
-document.getElementById('pauseBtn').addEventListener('click', function(){
-  if (player && typeof player.pauseVideo === 'function') { player.pauseVideo(); }
-  stopCounting();
-});
-document.getElementById('resetBtn').addEventListener('click', function(){
-  if (player && typeof player.stopVideo === 'function') { player.stopVideo(); }
-  resetCounting();
+function unlockPage() {
+  lockMsg.style.display = "none";
+  document.getElementById("playerWrap").style.opacity = "1";
+  document.getElementById("playerWrap").style.pointerEvents = "auto";
+  document.getElementById("regid").disabled = false;
+}
+
+setInterval(checkUnlock, 1000);
+
+// =============================
+// GOOGLE FORM PREFILL
+// =============================
+function getPrefillURL(regID) {
+  return "https://docs.google.com/forms/d/e/1FAIpQLSdWArsVRMeGS-uT5KuhYTUExa1mjk5uS25nd-13F2QCsotcaw/viewform"
+       + "?usp=pp_url&entry.1776124627=" + encodeURIComponent(regID);
+}
+
+// =============================
+// SUBMIT BUTTON
+// =============================
+document.getElementById("submitBtn").addEventListener("click", function() {
+  if (submitted) return;
+
+  const regID = document.getElementById("regid").value.trim();
+  if (!regID) return alert("Please enter your Registration ID");
+  if (!/^GSY2025-/.test(regID)) return alert("Invalid Registration ID");
+
+  localStorage.setItem("event_submitted", "YES");
+  submitted = true;
+
+  showAlreadySubmitted();
+
+  window.location.href = getPrefillURL(regID);
 });
 
-// Submission logic
-document.getElementById('submitBtn').addEventListener('click', function(){
-  const reg = document.getElementById('regid').value.trim();
-  if (!reg) { alert("Please enter your Registration ID (GSY2025-xxxxxx)"); return; }
-  // Basic format check
-  if (!/^GSY2025-/.test(reg)) { alert("Registration ID format seems wrong. It should start with GSY2025-"); return; }
-
-  // Prepare payload
-  const payload = {
-    token: "GSY2025_EventSecureKey_9f72B!xQ48pZ", // <<-- replace with same secret
-    registrationID: reg
-  };
-
-  // Disable button while sending
-  document.getElementById('submitBtn').disabled = true;
-  document.getElementById('result').textContent = "Submitting... please wait.";
-
-  fetch("https://script.google.com/macros/s/AKfycbwWC3XaVd-NDEi8rOEbFtiYPn9AnNNlMN6wR3oe2tZgbzghbsNvS2EGFrzQDcpehLztww/exec", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  })
-  .then(r => r.json())
-  .then(resp => {
-    if (resp && resp.success) {
-      document.getElementById('result').textContent = "Completed successfully. Certificate will be emailed shortly. Thank you!";
-      document.getElementById('result').style.color = "#0b7a3a";
-    } else {
-      document.getElementById('result').textContent = "Error: " + (resp.error || "Unknown error");
-      document.getElementById('result').style.color = "#b33";
-      document.getElementById('submitBtn').disabled = false;
-    }
-  })
-  .catch(err => {
-    document.getElementById('result').textContent = "Network error: " + err;
-    document.getElementById('result').style.color = "#b33";
-    document.getElementById('submitBtn').disabled = false;
-  });
-});
 </script>
+
 </body>
 </html>
