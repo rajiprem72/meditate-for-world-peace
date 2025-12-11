@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>International Meditation Day – Event Test Page</title>
+<title>International Meditation Day — Online Group Meditation</title>
 
 <style>
   body { font-family: Arial, sans-serif; margin:0; background:#f6f8fb; color:#222; }
@@ -26,7 +26,7 @@
 
 <body>
 <div class="wrap">
-  <h1>International Meditation Day – Event Test</h1>
+  <h1>International Meditation Day — Online Group Meditation</h1>
 
   <div id="lockMessage" class="lockbox"></div>
 
@@ -37,8 +37,8 @@
   </div>
 
   <div class="info">
-    <div><strong>Required Watch Time:</strong> 30 Seconds (TEST MODE)</div>
-    <div class="timer" id="timerDisplay">00:30</div>
+    <div><strong>Required Watch Time:</strong> 1369 Seconds</div>
+    <div class="timer" id="timerDisplay">00:1369</div>
 
     <div style="margin-top:12px;">
       <label><strong>Your Registration ID</strong></label><br>
@@ -58,12 +58,12 @@
 // CONFIGURATION – CHANGE FOR TESTING
 // =============================
 const EVENT_YEAR  = 2025;
-const EVENT_MONTH = 11;   // December = 11 (0-based)
-const EVENT_DAY   = 6;    // Today testing: 5 Dec
-const EVENT_HOUR  = 11;   // 8 PM
-const EVENT_MIN   = 00;   // 45 minutes
+const EVENT_MONTH = 11;   // December = 0 (0-based)
+const EVENT_DAY   = 11;    // 11 Dec 2025
+const EVENT_HOUR  = 12;   // 12 pm
+const EVENT_MIN   = 00;   // 00 minutes
 
-const REQUIRED_SECONDS = 30;
+const REQUIRED_SECONDS = 1369;
 
 // =============================
 let unlockTime = new Date(EVENT_YEAR, EVENT_MONTH, EVENT_DAY, EVENT_HOUR, EVENT_MIN);
@@ -157,7 +157,7 @@ function updateTimer() {
 function enableSubmission() {
   document.getElementById("submitBtn").disabled = false;
   document.getElementById("result").style.display = "block";
-  document.getElementById("result").textContent = "30 seconds completed. You may submit now.";
+  document.getElementById("result").textContent = "1369 seconds completed. You may submit now.";
 }
 
 // =============================
