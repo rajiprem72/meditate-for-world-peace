@@ -59,9 +59,9 @@
 // =============================
 const EVENT_YEAR  = 2025;
 const EVENT_MONTH = 11;   // December = 11 (0-based)
-const EVENT_DAY   = 11;    // 11 Dec 2025
-const EVENT_HOUR  = 12;   // 12 pm
-const EVENT_MIN   = 45;   // 00 minutes
+const EVENT_DAY   = 21;    // 21 Jan 2025
+const EVENT_HOUR  = 11;   // 11 am
+const EVENT_MIN   = 00;   // 00 minutes
 
 const REQUIRED_SECONDS = 1369;
 
@@ -207,5 +207,135 @@ document.getElementById("submitBtn").addEventListener("click", function() {
 
 </script>
 
+<!-- TERMS & CONDITIONS SECTION -->
+<section id="terms-section" style="margin:30px 0;">
+  <div style="
+    background:#ffffff;
+    border-radius:12px;
+    padding:18px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.08);
+    font-size:15px;
+    line-height:1.6;
+  ">
+
+    <h3 style="margin-top:0;color:#b22;text-align:center;">
+      Terms & Conditions for Participants
+    </h3>
+
+    <!-- SHORT SUMMARY -->
+    <p>
+      Participation is allowed only for registered participants who have paid
+      the donation. Event access, timer tracking, and certificate issuance are
+      strictly monitored. Please read the full terms carefully.
+    </p>
+
+    <!-- READ MORE BUTTON -->
+    <button onclick="toggleTerms()" style="
+      background:#b22;
+      color:#fff;
+      border:none;
+      padding:8px 14px;
+      border-radius:6px;
+      cursor:pointer;
+      font-size:14px;
+    ">
+      Read More
+    </button>
+
+    <!-- FULL TERMS (HIDDEN INITIALLY) -->
+    <div id="full-terms" style="display:none;margin-top:16px;">
+
+      <!-- ENGLISH -->
+      <h4>📌 English</h4>
+      <p>
+        Thank you for participating in the Meditation for World Peace – World Record Event.
+      </p>
+      <ul>
+        <li>Only participants who have registered and paid a donation of Rs.99 are eligible to participate.</li>
+        <li>A Registration ID has been sent to your Email ID and WhatsApp. You must enter it twice on the event day.</li>
+        <li>The event will be held on Sunday, 21st December 2025 at 11:00 AM IST.</li>
+        <li>The event link will be shared only on the event day.</li>
+        <li>The YouTube video will remain locked until exactly 11:00 AM IST.</li>
+        <li>You must click the Play button to start the video.</li>
+        <li>A timer will track your actual participation time.</li>
+        <li>If you move to another page, the video may continue playing, but the timer will pause.</li>
+        <li>You can submit your Registration ID only after the timer completes.</li>
+        <li>If the video ends before the timer finishes, replay the video until the timer completes.</li>
+        <li>The Registration ID format is <strong>GSY2025-XXXXXX</strong>.</li>
+        <li>After successful participation, the e-certificate will be sent via Email and WhatsApp.</li>
+        <li>Multiple participation in the same event is not allowed.</li>
+      </ul>
+
+      <p>
+        In case of any technical issue from our side and if you do not receive your
+        e-certificate, please contact us:
+        <br>
+        <strong>Tamil:</strong> 9677162580 / 8248579145<br>
+        <strong>English:</strong> 7305403416 / 7812857894<br>
+        <strong>Hindi:</strong> 7603889674
+      </p>
+
+      <hr>
+
+      <!-- TAMIL -->
+      <h4>📌 தமிழ்</h4>
+      <p>
+        உலக அமைதிக்கான தியானம் – உலக சாதனை நிகழ்வில் பங்கேற்றதற்கு நன்றி.
+      </p>
+      <ul>
+        <li>ரூ.99 நன்கொடை செலுத்தி பதிவு செய்தவர்களுக்கு மட்டுமே பங்கேற்பு அனுமதி.</li>
+        <li>உங்கள் பதிவு எண் Email மற்றும் WhatsApp மூலம் அனுப்பப்பட்டுள்ளது.</li>
+        <li>நிகழ்வு நாள்: ஞாயிறு, 21 டிசம்பர் 2025 | நேரம்: காலை 11:00 (IST).</li>
+        <li>நிகழ்வு லிங்க் நிகழ்வு நாளில் மட்டுமே வழங்கப்படும்.</li>
+        <li>YouTube வீடியோ காலை 11:00 மணி வரை lock செய்யப்பட்டிருக்கும்.</li>
+        <li>Play பட்டனை அழுத்திய பிறகே வீடியோ தொடங்கும்.</li>
+        <li>Timer உங்கள் பங்கேற்பு நேரத்தை கணக்கிடும்.</li>
+        <li>வேறு பக்கத்திற்கு சென்றால் Timer நிறுத்தப்படும்.</li>
+        <li>Timer முடிந்த பிறகே பதிவு எண்ணை உள்ளிட முடியும்.</li>
+        <li>வீடியோ முடிந்தாலும் Timer முடியவில்லை என்றால் மீண்டும் வீடியோவை இயக்கவும்.</li>
+        <li>பதிவு எண் வடிவம்: <strong>GSY2025-XXXXXX</strong>.</li>
+        <li>நிகழ்வு முடிந்ததும் சான்றிதழ் Email மற்றும் WhatsApp மூலம் அனுப்பப்படும்.</li>
+        <li>ஒரே நிகழ்வில் மீண்டும் பங்கேற்க முடியாது.</li>
+      </ul>
+
+      <hr>
+
+      <!-- HINDI -->
+      <h4>📌 हिंदी</h4>
+      <p>
+        विश्व शांति ध्यान – विश्व रिकॉर्ड कार्यक्रम में भाग लेने के लिए धन्यवाद।
+      </p>
+      <ul>
+        <li>केवल ₹99 दान के साथ पंजीकरण करने वाले प्रतिभागी ही भाग ले सकते हैं।</li>
+        <li>पंजीकरण ID Email और WhatsApp पर भेजी गई है।</li>
+        <li>कार्यक्रम: रविवार, 21 दिसंबर 2025 | समय: 11:00 AM IST।</li>
+        <li>कार्यक्रम लिंक केवल कार्यक्रम के दिन भेजा जाएगा।</li>
+        <li>YouTube वीडियो 11:00 AM तक लॉक रहेगा।</li>
+        <li>Play बटन दबाने पर ही वीडियो शुरू होगा।</li>
+        <li>Timer आपकी भागीदारी का समय मापेगा।</li>
+        <li>अन्य पेज पर जाने पर Timer रुक जाएगा।</li>
+        <li>Timer पूरा होने पर ही पंजीकरण ID दर्ज कर सकते हैं।</li>
+        <li>यदि वीडियो समाप्त हो जाए और Timer बाकी हो, तो वीडियो दोबारा चलाएं।</li>
+        <li>पंजीकरण ID प्रारूप: <strong>GSY2025-XXXXXX</strong>.</li>
+        <li>सफल भागीदारी के बाद प्रमाण पत्र Email और WhatsApp पर भेजा जाएगा।</li>
+        <li>एक ही कार्यक्रम में दोबारा भाग नहीं ले सकते।</li>
+      </ul>
+
+    </div>
+  </div>
+</section>
+
+<script>
+function toggleTerms() {
+  const terms = document.getElementById("full-terms");
+  if (terms.style.display === "none") {
+    terms.style.display = "block";
+  } else {
+    terms.style.display = "none";
+  }
+}
+</script>
+
+  
 </body>
 </html>
